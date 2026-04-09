@@ -50,7 +50,8 @@ pipeline {
                 echo 'Deploying to 178.128.93.188/kimheng...'
                 sh '''
                     DEPLOY_HOST="178.128.93.188"
-                    TARGET_USER="${DEPLOY_USER:-kimheng}"
+                    TARGET_USER="${DEPLOY_USER:-root}"
+                    TARGET_PASS="${DEPLOY_PASSWORD:-}"
                     INVENTORY_FILE="$(mktemp)"
                     echo "[web]" > "$INVENTORY_FILE"
 
@@ -60,6 +61,8 @@ pipeline {
                         HOST_LINE="$HOST_LINE ansible_ssh_private_key_file=$DEPLOY_KEY_PATH"
                     elif [ -f "$HOME/.ssh/id_rsa" ]; then
                         HOST_LINE="$HOST_LINE ansible_ssh_private_key_file=$HOME/.ssh/id_rsa"
+                    elif [ -n "$TARGET_PASS" ]; then
+                        HOST_LINE="$HOST_LINE ansible_password=$TARGET_PASS"
                     fi
 
                     echo "$HOST_LINE" >> "$INVENTORY_FILE"
