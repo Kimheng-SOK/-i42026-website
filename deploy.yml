@@ -1,0 +1,87 @@
+---
+- name: Deploy Laravel Application
+  hosts: webservers
+  remote_user: root
+  gather_facts: yes
+
+  tasks:
+    - name: Create application directory
+      file:
+        path: "{{ app_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Check if repository exists
+      stat:
+        path: "{{ app_path }}/public"
+      register: repo_exists
+
+    - name: Clone repository (first time)
+      shell: |
+        cd {{ app_path }}/..
+        git clone https://github.com/Kimheng-SOK/-i42026-website.git temp_repo
+        cp -r temp_repo/* {{ app_path }}/
+        rm -rf temp_repo
+      when: not repo_exists.stat.exists
+
+    - name: Update repository (subsequent times)
+      shell: |
+        cd {{ app_path }}
+        git pull origin main
+      when: repo_exists.stat.exists
+
+    - name: Install PHP dependencies
+      shell: |
+        cd {{ app_path }}
+        composer install --no-dev --optimize-autoloader
+
+    - name: Install Node dependencies
+      shell: |
+        cd {{ app_path }}
+        npm install
+        npm run build
+
+    - name: Copy .env file
+      shell: |
+        cd {{ app_path }}
+        cp .env.example .env || true
+
+    - name: Generate application key
+      shell: |
+        cd {{ app_path }}
+        php artisan key:generate
+
+    - name: Run migrations
+      shell: |
+        cd {{ app_path }}
+        php artisan migrate --force
+
+    - name: Clear caches
+      shell: |
+        cd {{ app_path }}
+        php artisan cache:clear
+        php artisan config:clear
+        php artisan view:clear
+
+    - name: Set correct permissions
+      shell: |
+        cd {{ app_path }}
+        chown -R www-data:www-data .
+        chmod -R 755 .
+        chmod -R 775 storage bootstrap/cache
+
+    - name: Restart PHP-FPM
+      systemd:
+        name: php8.4-fpm
+        state: restarted
+      ignore_errors: yes
+
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
+      ignore_errors: yes
+
+    - name: Deployment successful
+      debug:
+        msg: "Application deployed successfully to {{ app_path }}"

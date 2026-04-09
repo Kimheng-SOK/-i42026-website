@@ -9,6 +9,9 @@ pipeline {
                 echo 'Building...'
                 checkout scm
 
+                echo 'Installing system dependencies...'
+                sh 'apt-get update && apt-get install -y php-sqlite3'
+
                 echo 'Copy env file...'
                 sh 'cp .env.example .env'
 
@@ -24,6 +27,9 @@ pipeline {
                 sh 'npm install'
                 sh 'npm run build'
 
+                echo 'Verifying Vite build...'
+                sh 'test -f public/build/manifest.json || (echo "Vite manifest not found"; exit 1)'
+
                 echo 'Generating application key...'
                 sh 'php artisan key:generate'
             }
@@ -31,14 +37,14 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing...'
-                sh 'php artisan test'
+                sh 'php artisan test --parallel'
             }
         }
-        // stage('Deploy') {
-        //     steps {
-        //         echo 'Deploying...'
-        //         sh 'ansible-playbook -i inventory/hosts deploy.yml'
-        //     }
-        // }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to 178.128.93.188/kimheng...'
+                sh 'ansible-playbook -i inventory/hosts deploy.yml'
+            }
+        }
     }
 }
