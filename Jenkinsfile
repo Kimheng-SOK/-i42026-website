@@ -53,9 +53,9 @@ pipeline {
                     echo "[web]" > "$INVENTORY_FILE"
 
                     if [ -n "$DEPLOY_USER" ]; then
-                        echo "178.128.93.188 ansible_user=$DEPLOY_USER" >> "$INVENTORY_FILE"
+                        echo "178.128.93.188 ansible_user=$DEPLOY_USER ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new'" >> "$INVENTORY_FILE"
                     else
-                        echo "178.128.93.188" >> "$INVENTORY_FILE"
+                        echo "178.128.93.188 ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new'" >> "$INVENTORY_FILE"
                     fi
 
                     ansible-playbook -i "$INVENTORY_FILE" deploy.yml -e "workspace=$WORKSPACE"
@@ -81,7 +81,7 @@ URL: ${env.BUILD_URL}
                         subject: subject,
                         body: body
                     )
-                    echo 'Failure email notification sent.'
+                    echo 'Failure email notification attempted.'
                 } catch (err) {
                     echo "Email notification failed: ${err}"
                 }
