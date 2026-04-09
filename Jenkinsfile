@@ -51,7 +51,7 @@ pipeline {
                 sh '''
                     DEPLOY_HOST="178.128.93.188"
                     TARGET_USER="${DEPLOY_USER:-root}"
-                    TARGET_PASS="${DEPLOY_PASSWORD:-}"
+                    TARGET_PASS="${DEPLOY_PASSWORD:-I4@2026GIC}"
                     INVENTORY_FILE="$(mktemp)"
                     echo "[web]" > "$INVENTORY_FILE"
 
@@ -62,7 +62,10 @@ pipeline {
                     elif [ -f "$HOME/.ssh/id_rsa" ]; then
                         HOST_LINE="$HOST_LINE ansible_ssh_private_key_file=$HOME/.ssh/id_rsa"
                     elif [ -n "$TARGET_PASS" ]; then
-                        HOST_LINE="$HOST_LINE ansible_password=$TARGET_PASS"
+                        HOST_LINE="$HOST_LINE ansible_password=$TARGET_PASS ansible_ssh_pass=$TARGET_PASS"
+                    else
+                        echo "No deployment credentials found. Set DEPLOY_KEY_PATH or DEPLOY_PASSWORD in Jenkins."
+                        exit 1
                     fi
 
                     echo "$HOST_LINE" >> "$INVENTORY_FILE"
