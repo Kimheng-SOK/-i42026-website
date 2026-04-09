@@ -37,6 +37,9 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing...'
+                echo 'Checking PHP configuration...'
+                sh 'php -i | grep -i sqlite || echo "Checking for SQLite support..."'
+                sh 'php -r "var_dump(PDO::getAvailableDrivers());"'
                 sh 'php artisan test --parallel'
             }
         }
