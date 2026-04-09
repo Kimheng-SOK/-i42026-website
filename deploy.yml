@@ -4,6 +4,11 @@
   vars:
     deploy_path: "/var/www/html/kimheng"
   tasks:
+    - name: Ensure rsync is installed on target host
+      ansible.builtin.package:
+        name: rsync
+        state: present
+
     - name: Ensure deployment directory exists
       ansible.builtin.file:
         path: "{{ deploy_path }}"
