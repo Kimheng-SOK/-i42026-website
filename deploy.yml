@@ -1,17 +1,19 @@
 ---
 - name: Deploy Laravel App to Server
   hosts: all
+  vars:
+    deploy_path: "/var/www/html/kimheng"
   tasks:
     - name: Ensure deployment directory exists
       ansible.builtin.file:
-        path: "/var/www/html/Kimheng" 
+        path: "{{ deploy_path }}"
         state: directory
         mode: '0755'
 
     - name: Copy Laravel files to the server
       ansible.posix.synchronize:
         src: "{{ workspace }}/"
-        dest: "/var/www/html/Kimheng/"
+        dest: "{{ deploy_path }}/"
         delete: yes
         rsync_opts:
           - "--exclude=.git"
@@ -24,5 +26,5 @@
         state: directory
         mode: '0777'
       loop:
-        - "/var/www/html/Kimheng/storage"
-        - "/var/www/html/Kimheng/bootstrap/cache"
+        - "{{ deploy_path }}/storage"
+        - "{{ deploy_path }}/bootstrap/cache"

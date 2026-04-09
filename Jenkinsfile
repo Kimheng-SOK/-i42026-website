@@ -48,7 +48,55 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying to 178.128.93.188/kimheng...'
-                sh 'ansible-playbook -i inventory/hosts deploy.yml'
+                sh '''
+                    INVENTORY_FILE="$(mktemp)"
+                    echo "[web]" > "$INVENTORY_FILE"
+
+                    if [ -n "$DEPLOY_USER" ]; then
+                        echo "178.128.93.188 ansible_user=$DEPLOY_USER" >> "$INVENTORY_FILE"
+                    else
+                        echo "178.128.93.188" >> "$INVENTORY_FILE"
+                    fi
+
+                    ansible-playbook -i "$INVENTORY_FILE" deploy.yml -e "workspace=$WORKSPACE"
+                '''
+            }
+        }
+    }
+
+    post {
+        failure {
+            script {
+                def subject = "Jenkins FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                def body = """
+Build failed.
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+URL: ${env.BUILD_URL}
+""".stripIndent()
+
+                try {
+                    emailext(
+                        to: "${env.NOTIFY_EMAILS ?: 'boypoor302@gmail.com'}",
+                        subject: subject,
+                        body: body
+                    )
+                    echo 'Failure email notification sent.'
+                } catch (err) {
+                    echo "Email notification failed: ${err}"
+                }
+
+                sh '''
+                    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+                      TEXT="Jenkins FAILED: ${JOB_NAME} #${BUILD_NUMBER}%0A${BUILD_URL}"
+                      curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        -d chat_id="${TELEGRAM_CHAT_ID}" \
+                        -d text="$TEXT" >/dev/null
+                      echo "Telegram notification sent."
+                    else
+                      echo "Telegram notification skipped (set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)."
+                    fi
+                '''
             }
         }
     }
