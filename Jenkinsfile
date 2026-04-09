@@ -13,11 +13,11 @@ pipeline {
                 sh 'cp .env.example .env'
 
                 echo 'Configuring database...'
-                sed -i 's/DB_HOST=.*/DB_HOST=localhost/' .env
-                sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
-                sed -i 's/DB_DATABASE=.*/DB_DATABASE=laravel/' .env
-                sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
-                sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=/' .env
+                sh 'sed -i "s|DB_HOST=.*|DB_HOST=localhost|" .env'
+                sh 'sed -i "s|DB_PORT=.*|DB_PORT=3306|" .env'
+                sh 'sed -i "s|DB_DATABASE=.*|DB_DATABASE=laravel|" .env'
+                sh 'sed -i "s|DB_USERNAME=.*|DB_USERNAME=root|" .env'
+                sh 'sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=|" .env'
 
                 echo 'Installing dependencies...'
                 sh 'composer install'
@@ -33,11 +33,11 @@ pipeline {
                 sh 'php artisan test'
             }
         }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying...'
-                sh 'ansible-playbook -i inventory/hosts deploy.yml'
-            }
-        }
+        // stage('Deploy') {
+        //     steps {
+        //         echo 'Deploying...'
+        //         sh 'ansible-playbook -i inventory/hosts deploy.yml'
+        //     }
+        // }
     }
 }
