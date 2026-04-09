@@ -10,7 +10,7 @@ pipeline {
                 checkout scm
 
                 echo 'Installing system dependencies...'
-                sh 'apt-get update && apt-get install -y php-sqlite3'
+                sh 'sudo apt-get update && sudo apt-get install -y php-sqlite3'
 
                 echo 'Copy env file...'
                 sh 'cp .env.example .env'
