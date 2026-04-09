@@ -38,9 +38,11 @@ pipeline {
             steps {
                 echo 'Testing...'
                 echo 'Checking PHP configuration...'
-                sh 'php -i | grep -i sqlite || echo "Checking for SQLite support..."'
-                sh 'php -r "var_dump(PDO::getAvailableDrivers());"'
-                sh 'php artisan test --parallel'
+                sh '''
+                    php -m | grep -qiE 'sqlite3|pdo_sqlite' || { echo "SQLite extension missing"; exit 1; }
+                    php -r "if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) { fwrite(STDERR, 'PDO sqlite driver missing'.PHP_EOL); exit(1); } echo 'PDO drivers: '.implode(', ', PDO::getAvailableDrivers()).PHP_EOL;"
+                    php artisan test --parallel
+                '''
             }
         }
         stage('Deploy') {
