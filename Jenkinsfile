@@ -49,14 +49,21 @@ pipeline {
             steps {
                 echo 'Deploying to 178.128.93.188/kimheng...'
                 sh '''
+                    DEPLOY_HOST="178.128.93.188"
+                    TARGET_USER="${DEPLOY_USER:-kimheng}"
                     INVENTORY_FILE="$(mktemp)"
                     echo "[web]" > "$INVENTORY_FILE"
 
-                    if [ -n "$DEPLOY_USER" ]; then
-                        echo "178.128.93.188 ansible_user=$DEPLOY_USER ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new'" >> "$INVENTORY_FILE"
-                    else
-                        echo "178.128.93.188 ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new'" >> "$INVENTORY_FILE"
+                    HOST_LINE="$DEPLOY_HOST ansible_user=$TARGET_USER ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new'"
+
+                    if [ -n "$DEPLOY_KEY_PATH" ]; then
+                        HOST_LINE="$HOST_LINE ansible_ssh_private_key_file=$DEPLOY_KEY_PATH"
+                    elif [ -f "$HOME/.ssh/id_rsa" ]; then
+                        HOST_LINE="$HOST_LINE ansible_ssh_private_key_file=$HOME/.ssh/id_rsa"
                     fi
+
+                    echo "$HOST_LINE" >> "$INVENTORY_FILE"
+                    echo "Using deploy user: $TARGET_USER"
 
                     ansible-playbook -i "$INVENTORY_FILE" deploy.yml -e "workspace=$WORKSPACE"
                 '''
