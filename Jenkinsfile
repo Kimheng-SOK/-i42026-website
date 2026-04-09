@@ -22,6 +22,7 @@ pipeline {
                 echo 'Installing dependencies...'
                 sh 'composer install'
                 sh 'npm install'
+                sh 'npm run build'
 
                 echo 'Generating application key...'
                 sh 'php artisan key:generate'
